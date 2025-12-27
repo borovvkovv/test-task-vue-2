@@ -12,7 +12,6 @@ const store = new Vuex.Store({
       state.familyMembers.push(payload);
     },
     deleteFamilyMember(state, payload) {
-      console.log(payload);
       state.familyMembers = [
         ...state.familyMembers.slice(0, payload),
         ...state.familyMembers.slice(payload + 1),
