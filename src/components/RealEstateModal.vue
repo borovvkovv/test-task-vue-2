@@ -16,35 +16,42 @@
   </div>
 </template>
 
-<script>
-  import axios from 'axios';
+<script lang="ts">
+import { instance } from '../api';
+import { RealEstate } from '../store/utils/models';
+import Vue from 'vue';
 
-  export default {
+interface IData {
+  showModal: boolean;
+  realEstate?: RealEstate
+}
+
+interface IMethods {
+  open(familyMemberId: number): void;
+  close(): void
+}
+  export default Vue.extend<IData, IMethods, {}, {}>({
     name: 'RealEstateModal',
-    data() {
-      return {
+    data: () => ({
         showModal: false,
-        realEstate: {
-          hasRealEstate: false,
-          objects: [],
-        },
-      };
-    },
+        realEstate: undefined
+    }),
     methods: {
-      open(familyMemberId) {
-        this.realEstate = axios
-          .get(`/api/family/members/${familyMemberId}/real-estate `)
+      open(familyMemberId: number) {
+          instance<RealEstate, RealEstate>({
+                url:`/members/${familyMemberId}/real-estate ` ,
+                method: 'get',
+          })
           .then((response) => {
             this.realEstate = response.data;
             this.showModal = true
           });
       },
       close() {
-        // this.realEstate = this.$store.getFamilyMemberRealEstate(familyMemberId);
         this.showModal = false;
       },
     },
-  };
+  });
 </script>
 
 <style scoped>

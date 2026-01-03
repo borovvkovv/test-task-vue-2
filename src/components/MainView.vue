@@ -17,14 +17,14 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(x, i) in allFamilyMembers">
+        <tr v-for="(x) in allFamilyMembers">
           <td>{{ getFIO(x) }}</td>
-          <td>{{ x.birthDate }}</td>
+          <td>{{ formatDate(new Date(x.birthDate)) }}</td>
           <td>{{ getFamilyRoleTitle(x) }}</td>
           <td>{{ formatApplicant(x) }}</td>
-          <td><input type="button" value="Редактировать" @click="onEditMemberHandler(x, i)"></input></td>
-          <td><input type="button" value="Удалить" @click="onDeleteMemberHandler(i)"></input></td>
-          <td><input type="button" value="Инф-ия о недвиж-ти" @click="onRealEstateShowHandler(i)"></input></td>
+          <td><input type="button" value="Редактировать" @click="onEditMemberHandler(x, x.id)"></input></td>
+          <td><input type="button" value="Удалить" @click="onDeleteMemberHandler(x.id)"></input></td>
+          <td><input type="button" value="Инф-ия о недвиж-ти" @click="onRealEstateShowHandler(x.id)"></input></td>
         </tr>
       </tbody>
     </table>
@@ -32,39 +32,57 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import Form from './Form.vue';
 import RealEstateModal from './RealEstateModal.vue';
-import axios from 'axios';
-import { familyRoles } from './utils/models';
+import {  FamilyRole, familyRoles, FormMode, initialFormData } from './utils/models';
+import { instance } from '../api';
+import { IFamilyMember, IFamilyMemberInit } from 'src/store/utils/models';
+import Vue from 'vue';
 
-export default {
+interface IData {
+  mode: FormMode,
+  editIndex: number,
+  responseError: boolean,
+  allFamilyMembers: IFamilyMember[],
+  formData: IFamilyMemberInit,
+}
+
+interface IMethods {
+  onFormSubmitHandler(value: IFamilyMemberInit): void
+  onDeleteMemberHandler(familyMemberIndex: number): void
+  onEditMemberHandler(familyMember: IFamilyMember, familyMemberIndex: number): void
+  onRealEstateShowHandler(familyMemberIndex: number): void
+  updateMembers(): void
+  reset(): void
+  getFIO(familyMember:IFamilyMember): String
+  formatApplicant(familyMember:IFamilyMember): string
+  getFamilyRoleTitle(familyMember:IFamilyMember): string
+  formatDate(date:Date): string
+}
+
+export default Vue.extend<IData, IMethods,{},{}>({
   name: 'MainView',
-  components:{Form: Form, RealEstateModal: RealEstateModal},
-  data() {
-    return {
-      mode: 'ADD',
+  components:{Form: Form, RealEstateModal: RealEstateModal },
+  data: () => ({
+      mode: FormMode.ADD,
       editIndex: -1,
       responseError: false,
       allFamilyMembers: [],
-      formData: {
-        lastName: '',
-        firstName: '',
-        middleName: '',
-        birthDate: '',
-        relation: '',
-        applicant: false,
-      },
-    };
-  },
+      formData: initialFormData,
+  }),
   methods: {
-    onFormSubmitHandler(value) {
+    onFormSubmitHandler(value: IFamilyMemberInit) {
       this.responseError = false;
 
-      if (this.mode == 'EDIT')
-        axios.post('edit', {
-          newMember: value,
-          index: this.editIndex
+      if (this.mode == FormMode.EDIT)
+        instance({
+          url:'/members/edit' ,
+          method: 'post',
+          data: {
+                  newMember: value,
+                  index: this.editIndex
+          },
         })
         .catch(() => {
           this.responseError = true;
@@ -77,10 +95,14 @@ export default {
             this.updateMembers();
 
           this.reset();
-          this.mode = 'ADD';
+          this.mode = FormMode.ADD;
         });
       else
-        axios.post('/api/family/members', value)
+        instance({
+            url:'/members' ,
+            method: 'post',
+            data: value,
+        })
         .catch(() => {
           this.responseError = true;
 
@@ -97,39 +119,49 @@ export default {
         });
 
     },
-    onDeleteMemberHandler(familyMemberIndex) {
-      axios.delete(`/api/family/members/${familyMemberIndex}`, familyMemberIndex).then(this.updateMembers);;
+    onDeleteMemberHandler(familyMemberIndex: number) {
+      instance({
+            url:`/members/${familyMemberIndex}` ,
+            method: 'delete',
+      })
+      .then(this.updateMembers);
     },
-    onEditMemberHandler(familyMember, familyMemberIndex) {
-      this.mode = 'EDIT';
+    onEditMemberHandler(familyMember: IFamilyMember, familyMemberIndex: number) {
+      this.mode = FormMode.EDIT;
       this.editIndex = familyMemberIndex;
       this.formData = familyMember;
     },
-    onRealEstateShowHandler(familyMemberIndex) {
-      this.$refs.realEstateModal.open(familyMemberIndex)
+    onRealEstateShowHandler(familyMemberIndex: number) {
+      (this.$refs.realEstateModal as InstanceType<typeof RealEstateModal>).open(familyMemberIndex)
     },
     updateMembers() {
-      axios.get('/api/family/members').then((response) => {
-        this.allFamilyMembers = response.data;
+      instance<IFamilyMember[], IFamilyMember[]>({
+            url:'/members' ,
+            method: 'get',
+      })
+      .then((response) => {
+        this.allFamilyMembers = response.data.map((x) => ({...x, birthDate: typeof x.birthDate === 'string' ? new Date(x.birthDate) : x.birthDate}));
       });
     },
     reset() {
-      this.formData = {
-        lastName: '',
-        firstName: '',
-        middleName: '',
-        birthDate: '',
-        relation: '',
-        applicant: false,
-      };
+      this.formData = initialFormData;
     },
-    getFIO(familyMember) { return `${familyMember.lastName} ${familyMember.firstName} ${familyMember.middleName}` },
-    formatApplicant(familyMember) { return familyMember.applicant === true ? 'Да' : 'Нет' },
-    getFamilyRoleTitle(familyMember) { return familyRoles.find((familyRole) =>
-      familyRole.value === familyMember.relation).title
-    }
+    getFIO(familyMember:IFamilyMember) { return `${familyMember.lastName} ${familyMember.firstName} ${familyMember.middleName}` },
+    formatApplicant(familyMember:IFamilyMember) { return familyMember.applicant === true ? 'Да' : 'Нет' },
+    getFamilyRoleTitle(familyMember:IFamilyMember) {
+      const familyRoleKey = Object.keys(familyRoles).find((x) => x === familyMember.relation)
+
+      return familyRoles[familyRoleKey as FamilyRole]
+    },
+    formatDate(date:Date) {
+      var dateAsString = date.getDate() < 10 ? '0' + date.getDate() : date.getDate();
+      var monthAsString = (date.getMonth() + 1) < 10 ? '0' + (date.getMonth() + 1) : (date.getMonth() + 1);
+      var yearAsString = date.getFullYear();
+
+      return `${dateAsString }.${monthAsString}.${yearAsString}`
+    },
   },
-};
+});
 </script>
 
 <style scoped>

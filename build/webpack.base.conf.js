@@ -11,7 +11,7 @@ function resolve(dir) {
 module.exports = {
   context: path.resolve(__dirname, '../'),
   entry: {
-    app: './src/main.js',
+    app: './src/main.ts',
   },
   output: {
     path: config.build.assetsRoot,
@@ -22,10 +22,9 @@ module.exports = {
         : config.dev.assetsPublicPath,
   },
   resolve: {
-    extensions: ['.js', '.vue', '.json'],
+    extensions: ['.vue', '.tsx', '.ts', '.js'],
     alias: {
       vue$: 'vue/dist/vue.esm.js',
-      '@': resolve('src'),
     },
   },
   module: {
@@ -34,6 +33,12 @@ module.exports = {
         test: /\.vue$/,
         loader: 'vue-loader',
         options: vueLoaderConfig,
+      },
+      {
+        test: /\.ts$/,
+        loader: 'ts-loader',
+        options: { appendTsSuffixTo: [/\.vue$/] },
+        exclude: [/node_modules/],
       },
       {
         test: /\.js$/,
@@ -46,16 +51,16 @@ module.exports = {
       },
     ],
   },
-  node: {
-    // prevent webpack from injecting useless setImmediate polyfill because Vue
-    // source contains it (although only uses it if it's native).
-    setImmediate: false,
-    // prevent webpack from injecting mocks to Node native modules
-    // that does not make sense for the client
-    dgram: 'empty',
-    fs: 'empty',
-    net: 'empty',
-    tls: 'empty',
-    child_process: 'empty',
-  },
+  // node: {
+  //   // prevent webpack from injecting useless setImmediate polyfill because Vue
+  //   // source contains it (although only uses it if it's native).
+  //   setImmediate: false,
+  //   // prevent webpack from injecting mocks to Node native modules
+  //   // that does not make sense for the client
+  //   dgram: 'empty',
+  //   fs: 'empty',
+  //   net: 'empty',
+  //   tls: 'empty',
+  //   child_process: 'empty',
+  // },
 };

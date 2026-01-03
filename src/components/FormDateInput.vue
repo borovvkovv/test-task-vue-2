@@ -4,52 +4,75 @@
       :for="propertyName"
       :class="[
         {
-          error: property.$dirty && (!property.isFilled || !property.isCorrect),
+          error: isDirty && !isFilled,
         },
       ]"
     >
       {{ label }}
     </label>
     <div>
-      <input
+      <DatePicker
         :id="propertyName"
-        type="text"
-        placeholder="XX.XX.XXXX"
+        v-model="value"
+        valueType="date"
+        format="DD.MM.YYYY"
+        placeholder="ДД.ММ.ГГГГ"
         :class="[
           {
             input: true,
-            inputError:
-              property.$dirty && (!property.isFilled || !property.isCorrect),
+            inputError: isDirty && !isFilled,
           },
         ]"
-        :value="property.$model"
-        @input="onInputHandler"
-      />
-      <p v-if="property.$dirty && !property.isFilled">Обязательное значение</p>
-      <p v-if="property.$dirty && !property.isCorrect">
-        Формат даты xx.xx.xxxx
-      </p>
+      ></DatePicker>
+      <p v-if="isDirty && !isFilled">Обязательное значение</p>
     </div>
   </div>
 </template>
 
-<script>
+<script lang="ts">
   import { validationMixin } from 'vuelidate';
+  import DatePicker from 'vue2-datepicker';
+  import 'vue2-datepicker/index.css';
+  import Vue from 'vue';
 
-  export default {
+  interface IComputed {
+    value: Date;
+  }
+
+  interface IProps {
+    modelValue: Date;
+    propertyName: string;
+    label: string;
+    isFilled: boolean;
+    isDirty: boolean;
+  }
+
+  export default Vue.extend<IProps, {}, IComputed, {}>({
     name: 'FormDateInput',
     mixins: [validationMixin],
-    props: {
-      property: Object,
-      propertyName: '',
-      label: '',
+    components: { DatePicker },
+    model: {
+      prop: 'modelValue',
+      event: 'update:modelValue',
     },
-    methods: {
-      onInputHandler(e) {
-        this.$emit('input', e.target.value);
+    props: {
+      modelValue: Date,
+      propertyName: String,
+      label: String,
+      isFilled: Boolean,
+      isDirty: Boolean,
+    },
+    computed: {
+      value: {
+        get() {
+          return this.modelValue;
+        },
+        set(newDate) {
+          this.$emit('update:modelValue', newDate);
+        },
       },
     },
-  };
+  });
 </script>
 
 <style scoped>

@@ -4,22 +4,20 @@
   </div>
 </template>
 
-<script>
-  import MainView from './components/MainView';
+<script lang="ts">
+  import Vue from 'vue';
+  import MainView from './components/MainView.vue';
 
-  export default {
+  export default Vue.extend({
     name: 'App',
     components: {
       MainView,
     },
-  };
+  });
 </script>
 
-<style>
+<style scoped>
   #app {
-    font-family: 'Avenir', Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
     text-align: center;
     color: #2c3e50;
     margin-top: 60px;

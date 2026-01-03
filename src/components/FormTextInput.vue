@@ -4,7 +4,7 @@
       :for="propertyName"
       :class="[
         {
-          error: property.$dirty && !property.isFilled,
+          error: isDirty && !isFilled,
         },
       ]"
     >
@@ -13,38 +13,61 @@
     <div>
       <input
         :id="propertyName"
+        v-model="value"
         type="text"
         :class="[
           {
             input: true,
-            inputError: property.$dirty && !property.isFilled,
+            inputError: isDirty && !isFilled,
           },
         ]"
-        :value="property.$model"
-        @input="onInputHandler"
       />
-      <p v-if="property.$dirty && !property.isFilled">Обязательное значение</p>
+      <p v-if="isDirty && !isFilled">Обязательное значение</p>
     </div>
   </div>
 </template>
 
-<script>
-  import { validationMixin } from 'vuelidate';
+<script lang="ts">
+  import Vue from 'vue';
+  import { validationMixin, type Validation } from 'vuelidate';
 
-  export default {
+  interface IProps {
+    modelValue: string;
+    propertyName: string;
+    label: string;
+    isFilled: boolean;
+    isDirty: boolean;
+  }
+
+  interface IComputed {
+    value: string;
+  }
+
+  export default Vue.extend<IProps, {}, IComputed, {}>({
     name: 'FormTextInput',
     mixins: [validationMixin],
     props: {
-      property: Object,
-      propertyName: '',
-      label: '',
+      modelValue: String,
+      propertyName: String,
+      label: String,
+      isFilled: Boolean,
+      isDirty: Boolean,
     },
-    methods: {
-      onInputHandler(e) {
-        this.$emit('input', e.target.value);
+    model: {
+      prop: 'modelValue',
+      event: 'update:modelValue',
+    },
+    computed: {
+      value: {
+        get() {
+          return this.modelValue;
+        },
+        set(newDate) {
+          this.$emit('update:modelValue', newDate);
+        },
       },
     },
-  };
+  });
 </script>
 
 <style scoped>

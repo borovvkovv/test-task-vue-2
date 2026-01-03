@@ -5,45 +5,51 @@
     </label>
     <div>
       <input
+        v-model="value"
         :id="propertyName"
         type="checkbox"
-        v-model="propertyLocal"
-        @input="onInputHandler"
       />
     </div>
   </div>
 </template>
 
-<script>
+<script lang="ts">
+  import Vue from 'vue';
   import { validationMixin } from 'vuelidate';
 
-  export default {
+  interface IComputed {
+    value: boolean;
+  }
+
+  interface IProps {
+    modelValue: boolean;
+    propertyName: string;
+    label: string;
+  }
+
+  export default Vue.extend<IProps, {}, IComputed, {}>({
     name: 'FormCheckboxInput',
     mixins: [validationMixin],
+    model: {
+      prop: 'modelValue',
+      event: 'update:modelValue',
+    },
     props: {
-      property: Object,
-      propertyName: '',
-      label: '',
+      modelValue: Boolean,
+      propertyName: String,
+      label: String,
     },
-    data() {
-      return {
-        propertyLocal: false,
-      };
-    },
-    methods: {
-      onInputHandler() {
-        this.$emit('input', !this.property.$model);
-      },
-    },
-    watch: {
-      property: {
-        handler: function () {
-          this.propertyLocal = this.property.$model;
+    computed: {
+      value: {
+        get() {
+          return this.modelValue;
         },
-        deep: true,
+        set(newDate) {
+          this.$emit('update:modelValue', newDate);
+        },
       },
     },
-  };
+  });
 </script>
 
 <style scoped>

@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import App from './App.vue';
-import { store } from './store/index.js';
-import './api/mockApi.js';
+import { store } from './store';
+import './api/mockApi';
 import './assets/style/default.css';
 
 Vue.config.productionTip = false;

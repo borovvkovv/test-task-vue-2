@@ -4,7 +4,7 @@
       :for="propertyName"
       :class="[
         {
-          error: !property.isFilled,
+          error: !isFilled,
         },
       ]"
     >
@@ -14,39 +14,65 @@
       <select
         :id="propertyName"
         type="date"
-        :class="[{ input: true, inputError: !property.isFilled }]"
-        v-model="property.$model"
+        :class="[{ input: true, inputError: !isFilled }]"
+        v-model="value"
       >
         <option
-          v-for="option in options"
-          :value="option.value"
+          v-for="optionKey in optionsKeys"
+          :value="optionKey"
         >
-          {{ option.title }}
+          {{ options[optionKey] }}
         </option>
       </select>
-      <p v-if="!property.isFilled">Обязательное значение</p>
+      <p v-if="!isFilled">Обязательное значение</p>
     </div>
   </div>
 </template>
 
-<script>
-  import { validationMixin } from 'vuelidate';
+<script lang="ts">
+  import Vue from 'vue';
+  import { FamilyRole } from './utils/models';
 
-  export default {
+  interface IProps {
+    modelValue: FamilyRole | null;
+    propertyName: string;
+    label: string;
+    options: Record<FamilyRole, string>;
+    isFilled: boolean;
+  }
+
+  interface IComputed {
+    value: FamilyRole | null;
+    optionsKeys: FamilyRole[];
+  }
+
+  export default Vue.extend<IProps, {}, IComputed, {}>({
     name: 'FormSelectInput',
-    mixins: [validationMixin],
     props: {
-      property: Object,
-      propertyName: '',
-      label: '',
-      options: [],
+      modelValue: String as () => FamilyRole | null,
+      propertyName: String,
+      label: String,
+      options: Object as () => Record<FamilyRole, string>,
+      isFilled: Boolean,
     },
-    methods: {
-      onInputHandler(e) {
-        this.$emit('input', e.target.value);
+    model: {
+      prop: 'modelValue',
+      event: 'update:modelValue',
+    },
+    computed: {
+      optionsKeys() {
+        return Object.keys(this.$props.options).map((x) => x as FamilyRole);
+      },
+      value: {
+        get() {
+          return this.modelValue;
+        },
+        set(newDate) {
+          this.$emit('update:modelValue', newDate);
+        },
       },
     },
-  };
+  });
 </script>
 
 <style scoped>

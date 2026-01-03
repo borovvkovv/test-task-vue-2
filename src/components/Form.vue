@@ -4,89 +4,89 @@
     class="form"
   >
     <FormTextInput
-      :property="$v.formData.lastName"
+      v-model="$v.formData.lastName.$model"
       property-name="lastName"
       label="Фамилия"
-      @input="
-        (newValue) => {
-          $v.formData.lastName.$model = newValue;
-        }
-      "
+      :is-filled="$v.formData.lastName.isFilled"
+      :is-dirty="$v.formData.lastName.$dirty"
     />
     <FormTextInput
-      :property="$v.formData.firstName"
+      v-model="$v.formData.firstName.$model"
       property-name="firstName"
       label="Имя"
-      @input="
-        (newValue) => {
-          $v.formData.firstName.$model = newValue;
-        }
-      "
+      :is-filled="$v.formData.firstName.isFilled"
+      :is-dirty="$v.formData.firstName.$dirty"
     />
     <FormTextInput
-      :property="$v.formData.middleName"
+      v-model="$v.formData.middleName.$model"
       property-name="middleName"
       label="Отчество"
-      @input="
-        (newValue) => {
-          $v.formData.middleName.$model = newValue;
-        }
-      "
+      :is-filled="$v.formData.middleName.isFilled"
+      :is-dirty="$v.formData.middleName.$dirty"
     />
     <FormDateInput
-      :property="$v.formData.birthDate"
+      v-model="$v.formData.birthDate.$model"
       property-name="birthDate"
       label="Дата рождения"
-      @input="
-        (newValue) => {
-          $v.formData.birthDate.$model = newValue;
-        }
-      "
+      :is-filled="$v.formData.birthDate.isFilled"
+      :is-dirty="$v.formData.birthDate.$dirty"
     />
     <FormSelectInput
-      :property="$v.formData.relation"
+      v-model="$v.formData.relation.$model"
       property-name="relation"
       label="Роль в семье"
       :options="familyRoles"
-      @input="
-        (newValue) => {
-          $v.formData.relation.$model = newValue;
-        }
-      "
+      :is-filled="$v.formData.relation.isFilled"
     />
     <FormCheckboxInput
-      :property="$v.formData.applicant"
+      v-model="$v.formData.applicant.$model"
       property-name="applicant"
       label="Признак заявителя"
-      @input="
-        (newValue) => {
-          $v.formData.applicant.$model = newValue;
-        }
-      "
     />
     <input
       type="submit"
-      :value="
-        submitStatus === 'PENDING'
-          ? 'Отправка...'
-          : mode === 'ADD'
-          ? 'Добавить'
-          : 'Готово'
-      "
+      :value="submitButtonText"
     />
   </form>
 </template>
 
-<script>
+<script lang="ts">
   import { validationMixin } from 'vuelidate';
-  import { familyRoles, initialFormData } from './utils/models';
-  import { dateFormatValidation, notEmptyStringValidation } from './utils';
+  import {
+    FamilyRole,
+    familyRoles,
+    FormMode,
+    initialFormData,
+    SubmitStatus,
+  } from './utils/models';
+  import { notEmptyStringValidation, notNullOrUndefined } from './utils';
+  import Vue from 'vue';
+  import { IFamilyMemberInit } from 'src/store/utils/models';
   import FormTextInput from './FormTextInput.vue';
   import FormDateInput from './FormDateInput.vue';
   import FormSelectInput from './FormSelectInput.vue';
   import FormCheckboxInput from './FormCheckboxInput.vue';
 
-  export default {
+  interface IData {
+    formData: IFamilyMemberInit;
+    submitStatus: SubmitStatus;
+    familyRoles: Record<FamilyRole, string>;
+  }
+
+  interface IMethods {
+    submit(): void;
+  }
+
+  interface IComputed {
+    submitButtonText: string;
+  }
+
+  interface IProps {
+    mode: FormMode;
+    formDataProps: IFamilyMemberInit;
+  }
+
+  export default Vue.extend<IData, IMethods, IComputed, IProps>({
     name: 'Form',
     mixins: [validationMixin],
     components: {
@@ -96,28 +96,25 @@
       FormCheckboxInput,
     },
     props: {
-      mode: String,
-      formDataProps: initialFormData,
+      mode: {
+        type: String as () => FormMode,
+      },
+      formDataProps: {
+        type: Object as () => IFamilyMemberInit,
+      },
     },
-    data() {
-      return {
-        formData: initialFormData,
-        submitStatus: null,
-        familyRoles,
-      };
-    },
+    data: () => ({
+      formData: initialFormData,
+      submitStatus: SubmitStatus.Ready,
+      familyRoles: familyRoles,
+    }),
     validations: {
       formData: {
         lastName: { isFilled: notEmptyStringValidation },
         firstName: { isFilled: notEmptyStringValidation },
-        middleName: {
-          isFilled: notEmptyStringValidation,
-        },
-        birthDate: {
-          isFilled: notEmptyStringValidation,
-          isCorrect: dateFormatValidation,
-        },
-        relation: { isFilled: notEmptyStringValidation },
+        middleName: { isFilled: notEmptyStringValidation },
+        birthDate: { isFilled: notNullOrUndefined },
+        relation: { isFilled: notNullOrUndefined },
         applicant: {},
       },
     },
@@ -126,9 +123,8 @@
         this.$v.formData.$touch();
         this.$v.$touch();
 
-        if (!this.$v.formData.$invalid) {
+        if (!this.$v.formData.$invalid)
           this.$emit('submit', this.$v.formData.$model);
-        }
       },
     },
     watch: {
@@ -140,7 +136,16 @@
         deep: true,
       },
     },
-  };
+    computed: {
+      submitButtonText() {
+        return this.submitStatus === SubmitStatus.Pending
+          ? 'Отправка...'
+          : this.mode === FormMode.ADD
+          ? 'Добавить'
+          : 'Готово';
+      },
+    },
+  });
 </script>
 
 <style scoped>

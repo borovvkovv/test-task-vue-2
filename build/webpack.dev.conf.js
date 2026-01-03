@@ -17,10 +17,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
       usePostCSS: true,
     }),
   },
-  // cheap-module-eval-source-map is faster for development
   devtool: config.dev.devtool,
-
-  // these devServer options should be customized in /config/index.js
   devServer: {
     clientLogLevel: 'warning',
     historyApiFallback: {
@@ -52,15 +49,13 @@ const devWebpackConfig = merge(baseWebpackConfig, {
       'process.env': require('../config/dev.env'),
     }),
     new webpack.HotModuleReplacementPlugin(),
-    new webpack.NamedModulesPlugin(), // HMR shows correct file names in console on update.
+    new webpack.NamedModulesPlugin(),
     new webpack.NoEmitOnErrorsPlugin(),
-    // https://github.com/ampedandwired/html-webpack-plugin
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: 'index.html',
       inject: true,
     }),
-    // copy custom static assets
     new CopyWebpackPlugin([
       {
         from: path.resolve(__dirname, '../static'),
