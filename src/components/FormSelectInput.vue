@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <label
-      :for="propertyName"
+      :for="inputId"
       :class="[
         {
           error: !isFilled,
@@ -12,7 +12,7 @@
     </label>
     <div>
       <select
-        :id="propertyName"
+        :id="inputId"
         type="date"
         :class="[{ input: true, inputError: !isFilled }]"
         v-model="value"
@@ -35,7 +35,6 @@
 
   interface IProps {
     modelValue: FamilyRole | null;
-    propertyName: string;
     label: string;
     options: Record<FamilyRole, string>;
     isFilled: boolean;
@@ -46,11 +45,14 @@
     optionsKeys: FamilyRole[];
   }
 
-  export default Vue.extend<IProps, {}, IComputed, {}>({
+  interface IData {
+    inputId: string;
+  }
+
+  export default Vue.extend<IData, {}, IComputed, IProps>({
     name: 'FormSelectInput',
     props: {
       modelValue: String as () => FamilyRole | null,
-      propertyName: String,
       label: String,
       options: Object as () => Record<FamilyRole, string>,
       isFilled: Boolean,
@@ -72,6 +74,9 @@
         },
       },
     },
+    data: () => ({
+      inputId: Math.random().toString(36).substring(2),
+    }),
   });
 </script>
 

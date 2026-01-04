@@ -35,7 +35,7 @@ mock.onPost('/api/family/members').reply(function (payload) {
   }
 });
 
-mock.onPost('/api/family/members/edit').reply(function (payload) {
+mock.onPut(/\/api\/family\/members\/\d+/).reply(function (payload) {
   const familyMember = JSON.parse(payload.data, function (k, v) {
     if (k === 'birthDate') return new Date(v);
 
@@ -45,13 +45,13 @@ mock.onPost('/api/family/members/edit').reply(function (payload) {
   if (
     !checkFamilyMemberAlreadyExists(
       store.getters.getFamilyMembers,
-      familyMember.newMember,
-      familyMember.index
+      familyMember,
+      familyMember.id
     )
   ) {
     store.commit('changeFamilyMember', {
-      newMember: familyMember.newMember,
-      index: familyMember.index,
+      newMember: familyMember,
+      index: familyMember.id,
     });
     return [200, {}];
   } else {

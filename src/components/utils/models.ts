@@ -6,11 +6,11 @@ export enum FamilyRole {
 }
 
 export const initialFormData: IFamilyMemberInit = {
-  lastName: '1',
-  firstName: '11',
-  middleName: '1',
-  birthDate: new Date(),
-  relation: FamilyRole.Father,
+  lastName: '',
+  firstName: '',
+  middleName: '',
+  birthDate: null,
+  relation: null,
   applicant: false,
 };
 
@@ -22,9 +22,4 @@ export const familyRoles: Record<FamilyRole, string> = {
 export enum FormMode {
   ADD = 'ADD',
   EDIT = 'EDIT',
-}
-
-export enum SubmitStatus {
-  Pending = 'PENDING',
-  Ready = 'READY',
 }

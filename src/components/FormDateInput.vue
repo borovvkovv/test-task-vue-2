@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <label
-      :for="propertyName"
+      :for="inputId"
       :class="[
         {
           error: isDirty && !isFilled,
@@ -12,7 +12,7 @@
     </label>
     <div>
       <DatePicker
-        :id="propertyName"
+        :id="inputId"
         v-model="value"
         valueType="date"
         format="DD.MM.YYYY"
@@ -41,13 +41,16 @@
 
   interface IProps {
     modelValue: Date;
-    propertyName: string;
     label: string;
     isFilled: boolean;
     isDirty: boolean;
   }
 
-  export default Vue.extend<IProps, {}, IComputed, {}>({
+  interface IData {
+    inputId: string;
+  }
+
+  export default Vue.extend<IData, {}, IComputed, IProps>({
     name: 'FormDateInput',
     mixins: [validationMixin],
     components: { DatePicker },
@@ -57,7 +60,6 @@
     },
     props: {
       modelValue: Date,
-      propertyName: String,
       label: String,
       isFilled: Boolean,
       isDirty: Boolean,
@@ -72,6 +74,9 @@
         },
       },
     },
+    data: () => ({
+      inputId: Math.random().toString(36).substring(2),
+    }),
   });
 </script>
 

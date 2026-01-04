@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <label
-      :for="propertyName"
+      :for="inputId"
       :class="[
         {
           error: isDirty && !isFilled,
@@ -12,7 +12,7 @@
     </label>
     <div>
       <input
-        :id="propertyName"
+        :id="inputId"
         v-model="value"
         type="text"
         :class="[
@@ -33,7 +33,6 @@
 
   interface IProps {
     modelValue: string;
-    propertyName: string;
     label: string;
     isFilled: boolean;
     isDirty: boolean;
@@ -43,12 +42,15 @@
     value: string;
   }
 
-  export default Vue.extend<IProps, {}, IComputed, {}>({
+  interface IData {
+    inputId: string;
+  }
+
+  export default Vue.extend<IData, {}, IComputed, IProps>({
     name: 'FormTextInput',
     mixins: [validationMixin],
     props: {
       modelValue: String,
-      propertyName: String,
       label: String,
       isFilled: Boolean,
       isDirty: Boolean,
@@ -67,6 +69,9 @@
         },
       },
     },
+    data: () => ({
+      inputId: Math.random().toString(36).substring(2),
+    }),
   });
 </script>
 

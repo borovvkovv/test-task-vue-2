@@ -1,6 +1,10 @@
 <template>
   <div class="container">
-    <Form ref="form" @submit="onFormSubmitHandler" :mode="mode" v-bind:formDataProps="formData" />
+    <Form ref="form"
+      @submit="onFormSubmitHandler"
+      :submit-button-text="submitButtonText"
+      v-bind:formDataProps="formData"
+    />
     <span v-if="responseError" class="memberExistsError">Член семьи с таким ФИО и датой рождения уже существует!</span>
     <table
       v-if="allFamilyMembers.length > 0"
@@ -22,7 +26,7 @@
           <td>{{ formatDate(new Date(x.birthDate)) }}</td>
           <td>{{ getFamilyRoleTitle(x) }}</td>
           <td>{{ formatApplicant(x) }}</td>
-          <td><input type="button" value="Редактировать" @click="onEditMemberHandler(x, x.id)"></input></td>
+          <td><input type="button" value="Редактировать" @click="onEditMemberHandler(x)"></input></td>
           <td><input type="button" value="Удалить" @click="onDeleteMemberHandler(x.id)"></input></td>
           <td><input type="button" value="Инф-ия о недвиж-ти" @click="onRealEstateShowHandler(x.id)"></input></td>
         </tr>
@@ -35,23 +39,22 @@
 <script lang="ts">
 import Form from './Form.vue';
 import RealEstateModal from './RealEstateModal.vue';
-import {  FamilyRole, familyRoles, FormMode, initialFormData } from './utils/models';
+import {  FamilyRole, familyRoles, FormMode,  } from './utils/models';
 import { instance } from '../api';
 import { IFamilyMember, IFamilyMemberInit } from 'src/store/utils/models';
 import Vue from 'vue';
 
 interface IData {
   mode: FormMode,
-  editIndex: number,
   responseError: boolean,
   allFamilyMembers: IFamilyMember[],
-  formData: IFamilyMemberInit,
+  formData: IFamilyMember | null,
 }
 
 interface IMethods {
   onFormSubmitHandler(value: IFamilyMemberInit): void
   onDeleteMemberHandler(familyMemberIndex: number): void
-  onEditMemberHandler(familyMember: IFamilyMember, familyMemberIndex: number): void
+  onEditMemberHandler(familyMember: IFamilyMember): void
   onRealEstateShowHandler(familyMemberIndex: number): void
   updateMembers(): void
   reset(): void
@@ -61,15 +64,18 @@ interface IMethods {
   formatDate(date:Date): string
 }
 
-export default Vue.extend<IData, IMethods,{},{}>({
+interface IComputed {
+  submitButtonText:string;
+}
+
+export default Vue.extend<IData, IMethods,IComputed,{}>({
   name: 'MainView',
   components:{Form: Form, RealEstateModal: RealEstateModal },
   data: () => ({
       mode: FormMode.ADD,
-      editIndex: -1,
       responseError: false,
       allFamilyMembers: [],
-      formData: initialFormData,
+      formData: null,
   }),
   methods: {
     onFormSubmitHandler(value: IFamilyMemberInit) {
@@ -77,12 +83,9 @@ export default Vue.extend<IData, IMethods,{},{}>({
 
       if (this.mode == FormMode.EDIT)
         instance({
-          url:'/members/edit' ,
-          method: 'post',
-          data: {
-                  newMember: value,
-                  index: this.editIndex
-          },
+          url:`/members/${this.formData.id}` ,
+          method: 'put',
+          data: {...this.formData, ...value},
         })
         .catch(() => {
           this.responseError = true;
@@ -95,7 +98,6 @@ export default Vue.extend<IData, IMethods,{},{}>({
             this.updateMembers();
 
           this.reset();
-          this.mode = FormMode.ADD;
         });
       else
         instance({
@@ -124,11 +126,13 @@ export default Vue.extend<IData, IMethods,{},{}>({
             url:`/members/${familyMemberIndex}` ,
             method: 'delete',
       })
-      .then(this.updateMembers);
+      .then(() => {
+        this.updateMembers();
+        this.reset();
+      });
     },
-    onEditMemberHandler(familyMember: IFamilyMember, familyMemberIndex: number) {
+    onEditMemberHandler(familyMember: IFamilyMember) {
       this.mode = FormMode.EDIT;
-      this.editIndex = familyMemberIndex;
       this.formData = familyMember;
     },
     onRealEstateShowHandler(familyMemberIndex: number) {
@@ -144,7 +148,9 @@ export default Vue.extend<IData, IMethods,{},{}>({
       });
     },
     reset() {
-      this.formData = initialFormData;
+      this.mode = FormMode.ADD;
+      this.formData = null;
+      (this.$refs.form as InstanceType<typeof Form>).reset();
     },
     getFIO(familyMember:IFamilyMember) { return `${familyMember.lastName} ${familyMember.firstName} ${familyMember.middleName}` },
     formatApplicant(familyMember:IFamilyMember) { return familyMember.applicant === true ? 'Да' : 'Нет' },
@@ -159,6 +165,11 @@ export default Vue.extend<IData, IMethods,{},{}>({
       var yearAsString = date.getFullYear();
 
       return `${dateAsString }.${monthAsString}.${yearAsString}`
+    },
+  },
+  computed: {
+    submitButtonText() {
+      return this.mode === FormMode.ADD ? 'Добавить' : 'Сохранить';
     },
   },
 });

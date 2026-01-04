@@ -1,12 +1,12 @@
 <template>
   <div class="container">
-    <label :for="propertyName">
+    <label :for="inputId">
       {{ label }}
     </label>
     <div>
       <input
         v-model="value"
-        :id="propertyName"
+        :id="inputId"
         type="checkbox"
       />
     </div>
@@ -23,11 +23,14 @@
 
   interface IProps {
     modelValue: boolean;
-    propertyName: string;
     label: string;
   }
 
-  export default Vue.extend<IProps, {}, IComputed, {}>({
+  interface IData {
+    inputId: string;
+  }
+
+  export default Vue.extend<IData, {}, IComputed, IProps>({
     name: 'FormCheckboxInput',
     mixins: [validationMixin],
     model: {
@@ -36,7 +39,6 @@
     },
     props: {
       modelValue: Boolean,
-      propertyName: String,
       label: String,
     },
     computed: {
@@ -49,6 +51,9 @@
         },
       },
     },
+    data: () => ({
+      inputId: Math.random().toString(36).substring(2),
+    }),
   });
 </script>
 
